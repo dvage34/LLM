@@ -1,0 +1,29 @@
+name: build-nwa
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Décompresser l'archive
+        run: tar xzf minillm.tar.gz --strip-components=1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Installer la chaîne de compilation ARM
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi make
+      - name: Récupérer le gabarit officiel NumWorks
+        run: git clone --depth 1 https://github.com/numworks/epsilon-sample-app-c /tmp/tpl
+      - name: Compiler
+        run: |
+          cp src/main.c src/lm.h src/model.h /tmp/tpl/src/
+          cd /tmp/tpl
+          sed -i -E 's/nwlink@[0-9.]+/nwlink@0.0.19/; s/eadk-cflags\)/eadk-cflags-device)/' Makefile
+          make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: minillm-nwa
+          path: /tmp/tpl/output/app.nwa
