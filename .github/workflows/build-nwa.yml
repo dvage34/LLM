@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Décompresser l'archive
@@ -27,3 +29,11 @@ jobs:
         with:
           name: minillm-nwa
           path: /tmp/tpl/output/app.nwa
+      - name: Publier app.nwa dans le dépôt
+        run: |
+          cp /tmp/tpl/output/app.nwa ./app.nwa
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -f app.nwa
+          git commit -m "Ajout app.nwa" || exit 0
+          git push
